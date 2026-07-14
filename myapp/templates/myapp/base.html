@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Knowledge Vault{% endblock %}</title>
+    <!-- Google Fonts - Outfit & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons via CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-primary: #07090c;
+            --bg-secondary: #12151e;
+            --bg-glass: rgba(18, 21, 30, 0.85);
+            --border-color: rgba(220, 38, 38, 0.12);
+            --border-hover: rgba(220, 38, 38, 0.45);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent-primary: #dc2626; /* Crimson Red */
+            --accent-primary-glow: rgba(220, 38, 38, 0.12);
+            --accent-success: #10b981; /* Emerald */
+            --accent-warning: #f59e0b; /* Amber */
+            --accent-danger: #dc2626; /* Crimson Red */
+            --accent-flat: #dc2626;
+            --sidebar-width: 280px;
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --font-display: 'Outfit', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphic card styling (no gradients, sharp premium red borders) */
+        .glass-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: var(--border-hover);
+            box-shadow: 0 12px 30px rgba(220, 38, 38, 0.05);
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #090a0d;
+            border-right: 1px solid var(--border-color);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 40px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .logo-text {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: white;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .nav-link.active {
+            background: var(--accent-primary-glow);
+            color: white;
+            border: 1px solid var(--accent-primary);
+        }
+
+        .nav-link i {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Storage indicator in sidebar */
+        .sidebar-storage {
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            margin-top: auto;
+            margin-bottom: 24px;
+        }
+
+        .storage-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        .storage-bar-bg {
+            background: rgba(255, 255, 255, 0.08);
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .storage-bar-fill {
+            background: var(--accent-flat);
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease-out;
+        }
+
+        .storage-caption {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .user-profile-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent-flat);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-family: var(--font-display);
+            color: white;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex-grow: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-email {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .logout-btn {
+            color: var(--text-muted);
+            transition: color 0.2s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logout-btn:hover {
+            color: var(--accent-danger);
+        }
+
+        /* Main Content Workspace */
+        .main-container {
+            margin-left: var(--sidebar-width);
+            flex-grow: 1;
+            padding: 40px;
+            min-height: 100vh;
+            width: calc(100% - var(--sidebar-width));
+        }
+
+        .top-navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        /* Messages / Alerts */
+        .messages-container {
+            margin-bottom: 24px;
+        }
+
+        .alert {
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .alert-error, .alert-danger {
+            background-color: rgba(220, 38, 38, 0.08);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            color: #f87171;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Scrollbar customizing */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(220, 38, 38, 0.15);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(220, 38, 38, 0.4);
+        }
+
+        @media (max-width: 992px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                display: grid !important;
+                grid-template-areas: 
+                    "logo user"
+                    "nav nav";
+                grid-template-columns: 1fr auto;
+                gap: 12px;
+                padding: 12px 16px;
+            }
+            .logo-container {
+                grid-area: logo;
+                margin-bottom: 0 !important;
+                align-self: center;
+            }
+            .nav-menu {
+                grid-area: nav;
+                margin-bottom: 0 !important;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                gap: 8px;
+                padding-bottom: 6px;
+                width: 100%;
+            }
+            .nav-menu::-webkit-scrollbar {
+                height: 3px;
+            }
+            .nav-menu::-webkit-scrollbar-thumb {
+                background: rgba(220, 38, 38, 0.2);
+                border-radius: 2px;
+            }
+            .nav-link {
+                white-space: nowrap;
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+            .sidebar-storage {
+                display: none !important;
+            }
+            .user-profile-section {
+                grid-area: user;
+                border-top: none !important;
+                padding-top: 0 !important;
+                align-self: center;
+                margin-top: 0 !important;
+            }
+            .main-container {
+                margin-left: 0;
+                width: 100%;
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .main-container {
+                padding: 16px 12px;
+            }
+            .user-info {
+                display: none !important;
+            }
+        }
+
+        /* Cookie Banner Styling */
+        .cookie-banner {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: calc(100% - 48px);
+            max-width: 460px;
+            background: rgba(15, 10, 10, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(220, 38, 38, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(220, 38, 38, 0.05);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .cookie-banner.hidden {
+            transform: translateY(40px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .cookie-content {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .cookie-icon-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: rgba(220, 38, 38, 0.08);
+            border: 1px solid rgba(220, 38, 38, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .cookie-text-box {
+            flex-grow: 1;
+        }
+
+        .cookie-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 6px 0;
+        }
+
+        .cookie-desc {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .cookie-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn-cookie {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-family: var(--font-display);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-cookie-primary {
+            background: var(--accent-primary);
+            color: white;
+            border: 1px solid var(--accent-primary);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+        }
+
+        .btn-cookie-primary:hover {
+            background: #b91c1c;
+            transform: translateY(-1px);
+        }
+
+        .btn-cookie-secondary {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-cookie-secondary:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: white;
+        }
+
+        @media (max-width: 480px) {
+            .cookie-banner {
+                bottom: 16px;
+                right: 16px;
+                width: calc(100% - 32px);
+                padding: 16px;
+            }
+            .cookie-actions {
+                width: 100%;
+            }
+            .btn-cookie {
+                flex: 1;
+                text-align: center;
+            }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <!-- Sidebar navigation -->
+    <aside class="sidebar">
+        <a href="{% url 'dashboard' %}" class="logo-container">
+            <div class="logo-icon">
+                <svg viewBox="0 0 32 32" width="30" height="30" style="display: block;">
+                    <rect width="32" height="32" rx="8" fill="#dc2626"/>
+                    <text x="6" y="22" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="16" fill="#ffffff">dj</text>
+                </svg>
+            </div>
+            <span class="logo-text">Vault AI</span>
+        </a>
+        
+        <nav class="nav-menu">
+            <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i data-lucide="layout-dashboard"></i>
+                Dashboard
+            </a>
+            <a href="{% url 'library' %}" class="nav-link {% if request.resolver_match.url_name == 'library' %}active{% endif %}">
+                <i data-lucide="files"></i>
+                My Files
+            </a>
+            <a href="{% url 'chat' %}" class="nav-link {% if request.resolver_match.url_name == 'chat' %}active{% endif %}">
+                <i data-lucide="message-square"></i>
+                AI Chat Assistant
+            </a>
+            <a href="{% url 'graph' %}" class="nav-link {% if request.resolver_match.url_name == 'graph' %}active{% endif %}">
+                <i data-lucide="network"></i>
+                Knowledge Graph
+            </a>
+            <a href="{% url 'studio' %}" class="nav-link {% if request.resolver_match.url_name == 'studio' %}active{% endif %}">
+                <i data-lucide="graduation-cap"></i>
+                AI Study Lounge
+            </a>
+        </nav>
+
+        <!-- Storage details widget -->
+        <div class="sidebar-storage">
+            <div class="storage-header">
+                <span>Vault Space</span>
+                <span id="storage-percentage-text">{{ profile.storage_percentage }}%</span>
+            </div>
+            <div class="storage-bar-bg">
+                <div class="storage-bar-fill" style="width: {{ profile.storage_percentage }}%;"></div>
+            </div>
+            <div class="storage-caption">
+                <span id="storage-used-text">{{ profile.storage_used_formatted }}</span> of {{ profile.storage_limit_formatted }}
+            </div>
+        </div>
+
+        <!-- Profile area -->
+        <div class="user-profile-section">
+            <div class="user-avatar">
+                {% if google_avatar %}
+                <img src="{{ google_avatar }}" alt="{{ user.get_full_name|default:user.username }}" referrerpolicy="no-referrer">
+                {% else %}
+                {{ user.email|slice:":1"|upper }}
+                {% endif %}
+            </div>
+            <div class="user-info">
+                <span class="user-name" title="{{ user.get_full_name|default:user.username }}">
+                    {{ user.get_full_name|default:user.username }}
+                </span>
+                <span class="user-email" title="{{ user.email }}">{{ user.email }}</span>
+            </div>
+            <a href="{% url 'account_logout' %}" class="logout-btn" title="Sign Out">
+                <i data-lucide="log-out"></i>
+            </a>
+        </div>
+    </aside>
+    {% endif %}
+
+    <!-- Main Workspace -->
+    <main class="main-container" style="{% if not user.is_authenticated %}margin-left: 0; width: 100%;{% endif %}">
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+                <i data-lucide="info"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-consent-banner" class="cookie-banner hidden">
+        <div class="cookie-content">
+            <div class="cookie-icon-box">
+                <i data-lucide="cookie" style="width: 24px; height: 24px; color: var(--accent-primary);"></i>
+            </div>
+            <div class="cookie-text-box">
+                <h4 class="cookie-title">Cookie & Privacy Consent</h4>
+                <p class="cookie-desc">We use local storage and cookies to optimize your AI study tools, save session layouts, and secure your vault metadata. Do you agree to our privacy policy?</p>
+            </div>
+        </div>
+        <div class="cookie-actions">
+            <button id="btn-cookie-decline" class="btn-cookie btn-cookie-secondary">Decline</button>
+            <button id="btn-cookie-accept" class="btn-cookie btn-cookie-primary">Accept & Enable</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize lucide icons
+        lucide.createIcons();
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const banner = document.getElementById("cookie-consent-banner");
+            const acceptBtn = document.getElementById("btn-cookie-accept");
+            const declineBtn = document.getElementById("btn-cookie-decline");
+
+            // Check if consent already given or declined
+            const consent = localStorage.getItem("cookieConsent");
+            if (!consent) {
+                // Show banner after short delay
+                setTimeout(() => {
+                    banner.classList.remove("hidden");
+                }, 800);
+            }
+
+            acceptBtn.addEventListener("click", function() {
+                localStorage.setItem("cookieConsent", "accepted");
+                
+                // Capture and store privacy / metadata locally as requested
+                const userMetadata = {
+                    acceptedAt: new Date().toISOString(),
+                    userAgent: navigator.userAgent,
+                    screenResolution: `${window.screen.width}x${window.screen.height}`,
+                    language: navigator.language,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                };
+                localStorage.setItem("userMetadata", JSON.stringify(userMetadata));
+                
+                banner.classList.add("hidden");
+            });
+
+            declineBtn.addEventListener("click", function() {
+                localStorage.setItem("cookieConsent", "declined");
+                banner.classList.add("hidden");
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

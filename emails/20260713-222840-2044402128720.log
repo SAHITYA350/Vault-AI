@@ -1,0 +1,19 @@
+Content-Type: text/plain; charset="utf-8"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Subject: [AI Study Lounge] Password Reset Email
+From: webmaster@localhost
+To: sahityaghosh350@gmail.com
+Date: Mon, 13 Jul 2026 16:58:40 -0000
+Message-ID: <178396192030.3800.15265775252364561380@LAPTOP-DAO0QFO1>
+
+Hello from AI Study Lounge!
+
+You're receiving this email because you or someone else has requested a password reset for your user account.
+It can be safely ignored if you did not request a password reset. Click the link below to reset your password.
+
+http://127.0.0.1:8000/accounts/password/reset/key/1-dboefs-690fe005c2cce7f9573589904e311502/
+
+Thank you for using AI Study Lounge!
+127.0.0.1:8000
+-------------------------------------------------------------------------------

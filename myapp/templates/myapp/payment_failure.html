@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed - Vault AI</title>
+    <!-- Outfit Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .failure-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px;
+            padding: 40px 32px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .icon-circle {
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            font-weight: bold;
+            margin: 0 auto 24px auto;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 12px;
+        }
+        p {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .btn-retry {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-retry:hover {
+            opacity: 0.9;
+        }
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid #334155;
+            color: #94a3b8;
+        }
+        .btn-cancel:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="failure-card">
+        <div class="icon-circle">✕</div>
+        <h1>Payment Failed</h1>
+        <p>The transaction could not be processed successfully. No funds have been debited from your account.</p>
+        
+        <div class="actions">
+            <a href="{% url 'dashboard' %}" class="btn btn-retry">Retry Upgrade</a>
+            <a href="{% url 'dashboard' %}" class="btn btn-cancel">Return to Dashboard</a>
+        </div>
+    </div>
+</body>
+</html>

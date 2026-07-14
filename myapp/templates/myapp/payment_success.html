@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Vault AI</title>
+    <!-- Outfit Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .success-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px;
+            padding: 40px 32px;
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .icon-circle {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-weight: bold;
+            margin: 0 auto 24px auto;
+        }
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 12px;
+        }
+        p {
+            font-size: 14px;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .details-box {
+            background: rgba(0,0,0,0.15);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 32px;
+            text-align: left;
+            font-size: 13px;
+        }
+        .details-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .details-row:last-child {
+            margin-bottom: 0;
+        }
+        .details-label {
+            color: #64748b;
+        }
+        .details-value {
+            color: white;
+            font-weight: 600;
+        }
+        .btn {
+            display: inline-block;
+            width: 100%;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-card">
+        <div class="icon-circle">✓</div>
+        <h1>Payment Successful!</h1>
+        <p>Thank you for upgrading to Vault Premium. Your account has been upgraded successfully and your storage limit is raised to {{ gb_limit }} GB.</p>
+        
+        <div class="details-box">
+            <div class="details-row">
+                <span class="details-label">Order ID</span>
+                <span class="details-value">{{ order_id }}</span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Amount Paid</span>
+                <span class="details-value">₹{{ price_inr }}.00 (US${{ price_usd }})</span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Subscription Mode</span>
+                <span class="details-value">{% if auto_pay %}Auto-Pay (Recurring){% else %}One-time payment{% endif %}</span>
+            </div>
+            <div class="details-row">
+                <span class="details-label">Status</span>
+                <span class="details-value" style="color: #10b981;">COMPLETED</span>
+            </div>
+        </div>
+
+        <a href="{% url 'dashboard' %}" class="btn">Go to Dashboard</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}Email Dev Logs - AI Study Lounge{% endblock %}
+
+{% block extra_head %}
+<style>
+    .logs-page {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+    .log-card {
+        margin-bottom: 20px;
+        padding: 20px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+    }
+    .log-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+        border-bottom: 1px solid rgba(220,38,38,0.1);
+        padding-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .log-body {
+        white-space: pre-wrap;
+        font-family: monospace;
+        font-size: 13px;
+        color: var(--text-secondary);
+        background: rgba(0, 0, 0, 0.25);
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.02);
+        margin-bottom: 12px;
+        overflow-x: auto;
+    }
+    .link-button {
+        display: inline-block;
+        padding: 10px 20px;
+        background: var(--accent-primary);
+        color: white;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+    }
+    .link-button:hover {
+        transform: translateY(-1px);
+        background: #b91c1c;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="logs-page">
+    <div style="margin-bottom: 28px;">
+        <h1 class="page-title">✉️ Local Email Dev Logs</h1>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-top: 6px; line-height: 1.5;">
+            Since we are in local development, this portal allows you to access password reset links from your mobile phone, tablet, Android, or iOS devices connected to your network.
+        </p>
+    </div>
+
+    {% if logs %}
+        {% for log in logs %}
+            <div class="glass-card log-card">
+                <div class="log-meta">
+                    <span>Log File: {{ log.filename }}</span>
+                </div>
+                <div class="log-body">{{ log.content }}</div>
+                {% if log.links %}
+                    <div style="margin-top: 14px;">
+                        <span style="font-size: 12px; font-weight: 700; color: var(--text-primary); display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">🔗 Reset Password Links Found:</span>
+                        {% for link in log.links %}
+                            <a href="{{ link }}" class="link-button" target="_blank">Click here to Reset Password</a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="glass-card log-card" style="padding: 60px; text-align: center; color: var(--text-muted);">
+            <i data-lucide="mail-warning" style="width: 48px; height: 48px; margin-bottom: 16px; color: var(--text-muted); margin-left: auto; margin-right: auto;"></i>
+            <p style="font-size: 15px;">No emails have been sent yet.</p>
+            <p style="font-size: 13px; margin-top: 4px;">Trigger a password reset request to see logs here.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,515 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}AI Knowledge Vault - Semantic Personal Knowledge Management{% endblock %}
+
+{% block extra_head %}
+<style>
+    .landing-wrapper {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 80px;
+    }
+
+    .hero-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 60px 0;
+        position: relative;
+    }
+
+    .hero-badge {
+        background: rgba(220, 38, 38, 0.08);
+        border: 1px solid rgba(220, 38, 38, 0.25);
+        color: #f87171;
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 28px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .hero-title {
+        font-family: var(--font-display);
+        font-size: clamp(32px, 5vw, 56px);
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -1.5px;
+        max-width: 850px;
+        margin-bottom: 24px;
+        color: white;
+    }
+
+    .hero-description {
+        font-size: clamp(15px, 2.5vw, 18px);
+        color: var(--text-secondary);
+        max-width: 650px;
+        line-height: 1.6;
+        margin-bottom: 40px;
+    }
+
+    .cta-container {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .btn-premium {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-family: var(--font-display);
+        font-size: 16px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: var(--accent-primary);
+        color: white;
+        border: 1px solid var(--accent-primary);
+        box-shadow: 0 4px 20px rgba(220, 38, 38, 0.15);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(220, 38, 38, 0.35);
+        background: #b91c1c;
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(220, 38, 38, 0.3);
+        transform: translateY(-2px);
+    }
+
+    /* Section Headers */
+    .section-header {
+        text-align: center;
+        margin-bottom: 48px;
+    }
+
+    .section-title {
+        font-family: var(--font-display);
+        font-size: clamp(24px, 4vw, 36px);
+        font-weight: 800;
+        color: white;
+        margin-bottom: 12px;
+    }
+
+    .section-subtitle {
+        color: var(--text-secondary);
+        font-size: 15px;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.5;
+    }
+
+    /* Grids */
+    .features-grid,
+    .pricing-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 28px;
+    }
+
+    .feature-card {
+        padding: 32px;
+        transition: transform 0.2s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+    }
+
+    .feature-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(220, 38, 38, 0.08);
+        color: var(--accent-primary);
+        margin-bottom: 24px;
+        border: 1px solid rgba(220, 38, 38, 0.15);
+    }
+
+    .feature-title {
+        font-family: var(--font-display);
+        font-size: 19px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        color: white;
+    }
+
+    .feature-desc {
+        color: var(--text-secondary);
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    /* Pricing card overrides */
+    .pricing-card {
+        padding: 40px 32px;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 480px;
+    }
+
+    .pricing-card.premium-tier {
+        border-color: rgba(220, 38, 38, 0.4);
+        background: linear-gradient(180deg, rgba(220, 38, 38, 0.03) 0%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .badge-popular {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: var(--accent-primary);
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 100px;
+        text-transform: uppercase;
+    }
+
+    .price-amount {
+        font-family: var(--font-display);
+        font-size: 40px;
+        font-weight: 800;
+        color: white;
+        margin: 16px 0;
+    }
+
+    .price-amount span {
+        font-size: 14px;
+        color: var(--text-secondary);
+        font-weight: 400;
+    }
+
+    .pricing-features {
+        list-style: none;
+        padding: 0;
+        margin: 24px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .pricing-features li {
+        font-size: 14px;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .pricing-features li i {
+        color: var(--accent-primary);
+        flex-shrink: 0;
+    }
+
+    /* Security detail block */
+    .security-section {
+        background: rgba(255, 255, 255, 0.01);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        padding: 48px;
+        display: flex;
+        gap: 40px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .security-content {
+        flex: 1;
+        min-width: 280px;
+    }
+
+    .security-graphics {
+        flex: 1;
+        min-width: 280px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .security-stat {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.02);
+        padding: 24px;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .stat-number {
+        font-family: var(--font-display);
+        font-size: 28px;
+        font-weight: 800;
+        color: var(--accent-primary);
+        margin-bottom: 6px;
+    }
+
+    /* Subtle background red glow */
+    .bg-glow-red {
+        position: absolute;
+        top: -10%;
+        left: 30%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(220, 38, 38, 0.035) 0%, rgba(0, 0, 0, 0) 70%);
+        z-index: -1;
+        filter: blur(40px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="landing-wrapper">
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="bg-glow-red"></div>
+
+        <div class="hero-badge">
+            <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i>
+            Intelligent Knowledge Vault
+        </div>
+
+        <h1 class="hero-title">Your Personal Drive, Empowered by Advanced AI</h1>
+        <p class="hero-description">
+            Upload images, PDFs, Word documents, text notes, and archives. Vault AI automatically catalogs, transcribes,
+            categorizes, and prepares your files for semantic AI searches.
+        </p>
+
+        <div class="cta-container">
+            {% load socialaccount %}
+            <a href="{% provider_login_url 'google' %}" class="btn-premium btn-primary">
+                <svg class="google-icon" viewBox="0 0 24 24"
+                    style="width: 18px; height: 18px; filter: brightness(0) invert(1);">
+                    <path fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l3.66-2.85z" />
+                    <path fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.85c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                Continue with Google
+            </a>
+        </div>
+    </div>
+
+    <!-- Core Features Grid -->
+    <div>
+        <div class="section-header">
+            <h2 class="section-title">Core Intelligence</h2>
+            <p class="section-subtitle">A seamless integration of AI models to capture, index, and organize files.</p>
+        </div>
+        <div class="features-grid">
+            <div class="glass-card feature-card">
+                <div class="feature-icon-wrapper"><i data-lucide="search"></i></div>
+                <h3 class="feature-title">Semantic Search</h3>
+                <p class="feature-desc">Forget strict filenames. Search using natural queries like "show beach photos"
+                    or "receipts from January" relying on vector embeddings.</p>
+            </div>
+            <div class="glass-card feature-card">
+                <div class="feature-icon-wrapper"><i data-lucide="eye"></i></div>
+                <h3 class="feature-title">Image Understanding</h3>
+                <p class="feature-desc">Uploaded images automatically get scanned for captions, OCR text, and
+                    auto-generated keywords via Salesforce BLIP and TrOCR APIs.</p>
+            </div>
+            <div class="glass-card feature-card">
+                <div class="feature-icon-wrapper"><i data-lucide="bot"></i></div>
+                <h3 class="feature-title">Agent Chat & RAG</h3>
+                <p class="feature-desc">Directly chat with your documents using LangChain and Mistral LLM. Summarize
+                    research, pull out receipts, or outline articles instantly.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Lounge Grid -->
+    <div>
+        <div class="section-header">
+            <h2 class="section-title">AI Study Lounge 2027</h2>
+            <p class="section-subtitle">Empowering learners with active evaluation tools, automated tests, and
+                anti-cheating guards.</p>
+        </div>
+        <div class="features-grid">
+            <div class="glass-card feature-card">
+                <div class="feature-icon-wrapper"><i data-lucide="graduation-cap"></i></div>
+                <h3 class="feature-title">Mock Oral Exam / Viva</h3>
+                <p class="feature-desc">Simulate a live oral board or professional interview. The AI agent challenges
+                    you with voice-responsive questions based on your files.</p>
+            </div>
+            <div class="glass-card feature-card">
+                <div class="feature-icon-wrapper"><i data-lucide="shield-alert"></i></div>
+                <h3 class="feature-title">Anti-Cheating Security</h3>
+                <p class="feature-desc">Features visibility state monitoring, browser focus guards, and automatic
+                    submissions to secure academic integrity during active exams.</p>
+            </div>
+            <div class="glass-card feature-card">
+                <div class="feature-icon-wrapper"><i data-lucide="trending-up"></i></div>
+                <h3 class="feature-title">SaaS Weak Point Audits</h3>
+                <p class="feature-desc">On completion of quizzes or exams, the AI grades your input against document
+                    context and outputs a full competency weaknesses audit report.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Focus -->
+    <div class="security-section">
+        <div class="security-content">
+            <div class="hero-badge" style="display: inline-flex; margin-bottom: 16px;">
+                <i data-lucide="lock" style="width: 12px; height: 12px;"></i> Security & Privacy First
+            </div>
+            <h3 class="feature-title" style="font-size: 26px; margin-bottom: 16px;">Pure OAuth Security Sandbox</h3>
+            <p class="feature-desc" style="font-size: 15px; margin-bottom: 20px; line-height: 1.6;">
+                We have removed standard email/password registration to defend your account from credential stuffing
+                attacks. Authentication is powered exclusively by Google OAuth.
+            </p>
+            <p class="feature-desc" style="font-size: 14px; line-height: 1.6;">
+                Device preferences, window configurations, and workspace states are sandboxed strictly inside your
+                browser's local storage.
+            </p>
+        </div>
+        <div class="security-graphics">
+            <div class="security-stat">
+                <div class="stat-number">100%</div>
+                <div style="font-size: 12px; color: var(--text-secondary);">Google OAuth Protected</div>
+            </div>
+            <div class="security-stat">
+                <div class="stat-number">0</div>
+                <div style="font-size: 12px; color: var(--text-secondary);">Stored Plain Passwords</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Grid (B2B SaaS Tiers) -->
+    <div>
+        <div class="section-header">
+            <h2 class="section-title">Simple Subscription Pricing</h2>
+            <p class="section-subtitle">Start organizing your files for free, then scale up storage packages as your
+                vault expands.</p>
+        </div>
+        <div class="pricing-grid">
+            <!-- Free tier -->
+            <div class="glass-card pricing-card">
+                <div>
+                    <h3 class="feature-title" style="font-size: 20px; margin-bottom: 8px;">Free Plan</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary);">Perfect for trial and lightweight
+                        organizing</p>
+                    <div class="price-amount">₹0 <span>/ month</span></div>
+                    <ul class="pricing-features">
+                        <li><i data-lucide="check" style="width: 16px; height: 16px;"></i> 100 MB Vault Storage</li>
+                        <li><i data-lucide="check" style="width: 16px; height: 16px;"></i> Interactive Knowledge Graph
+                        </li>
+                        <li><i data-lucide="check" style="width: 16px; height: 16px;"></i> Semantic RAG Chat Assistant
+                        </li>
+                        <li><i data-lucide="check" style="width: 16px; height: 16px;"></i> Standard 5-Question Quiz</li>
+                    </ul>
+                </div>
+                <a href="{% provider_login_url 'google' %}" class="btn-premium btn-secondary"
+                    style="width: 100%; text-align: center; justify-content: center; padding: 12px;">Get Started
+                    Free</a>
+            </div>
+
+            <!-- Premium tier -->
+            <div class="glass-card pricing-card premium-tier">
+                <span class="badge-popular">B2B Premium</span>
+                <div>
+                    <h3 class="feature-title" style="font-size: 20px; margin-bottom: 8px;">Premium Package</h3>
+                    <p style="font-size: 13px; color: var(--text-secondary);">Unlock full storage, mock exams, and
+                        analytics</p>
+                    <div class="price-amount">₹800 <span>/ 1 month (~$9.60 USD)</span></div>
+                    <ul class="pricing-features">
+                        <li><i data-lucide="check" style="width: 16px; height: 16px;"></i> **Multi-GB Tier Upgrades**
+                            (up to 20 GB)</li>
+                        <li><i data-lucide="check" style="width: 16px; height: 16px;"></i> Unlimited Mock Oral / Viva
+                            Exams</li>
+                        <li><i data-lucide="check" style="width: 16px; height: 16px;"></i> Anti-Cheating Secure
+                            Examination Mode</li>
+                        <li><i data-lucide="check" style="width: 16px; height: 16px;"></i> Detailed Weakness Competency
+                            Reports</li>
+                        <li><i data-lucide="check" style="width: 16px; height: 16px;"></i> Automated 30-Day
+                            Subscriptions</li>
+                    </ul>
+                </div>
+                <a href="{% provider_login_url 'google' %}" class="btn-premium btn-primary"
+                    style="width: 100%; text-align: center; justify-content: center; padding: 12px;">Upgrade Now</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Section -->
+    <footer class="glass-card landing-footer"
+        style="padding: 40px; margin-top: 40px; border-color: rgba(220, 38, 38, 0.15);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 24px;">
+            <div>
+                <h4
+                    style="font-family: var(--font-display); font-size: 18px; font-weight: 700; color: white; margin-bottom: 6px;">
+                    Sahitya Ghosh</h4>
+                <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 8px;">Full Stack Engineer & AI
+                    Developer</p>
+                <div
+                    style="display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--text-muted);">
+                    <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="phone" style="width: 14px; height: 14px;"></i> Phone: <a href="tel:8777099335"
+                            style="color: var(--text-secondary); text-decoration: none;">8777099335</a></span>
+                    <span style="display: flex; align-items: center; gap: 6px;"><i data-lucide="mail" style="width: 14px; height: 14px;"></i> Email: <a href="mailto:sahityaghosh350@gmail.com"
+                            style="color: var(--text-secondary); text-decoration: none;">sahityaghosh350@gmail.com</a></span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                <a href="https://www.linkedin.com/in/sahitya-ghosh-9ba098292/" target="_blank"
+                    class="btn-premium btn-secondary"
+                    style="padding: 10px 16px; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                    <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg> LinkedIn
+                </a>
+                <a href="https://github.com/SAHITYA350" target="_blank" class="btn-premium btn-secondary"
+                    style="padding: 10px 16px; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                    <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg> GitHub
+                </a>
+                <a href="https://leetcode.com/u/Balasur/" target="_blank" class="btn-premium btn-secondary"
+                    style="padding: 10px 16px; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                    <i data-lucide="code" style="width: 16px; height: 16px;"></i> LeetCode
+                </a>
+                <a href="https://www.instagram.com/sahityaghosh_350/?__pwa=1#" target="_blank"
+                    class="btn-premium btn-secondary"
+                    style="padding: 10px 16px; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+                    <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg> Instagram
+                </a>
+            </div>
+        </div>
+        <div
+            style="border-top: 1px solid rgba(255,255,255,0.02); margin-top: 32px; padding-top: 20px; text-align: center; font-size: 12px; color: var(--text-muted);">
+            &copy; 2026 AI Study Lounge. Built by Sahitya Ghosh. All rights reserved.
+        </div>
+    </footer>
+</div>
+{% endblock %}

@@ -1,0 +1,1207 @@
+{% extends 'myapp/base.html' %}
+
+{% block title %}Knowledge Graph - AI Knowledge Vault{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.9/standalone/umd/vis-network.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+    .graph-page-layout {
+        display: grid;
+        grid-template-columns: 280px 1fr;
+        gap: 24px;
+        height: calc(100vh - 120px);
+    }
+
+    /* Container for the Vis.js canvas */
+    .graph-network-container {
+        height: 100%;
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        background: rgba(8, 9, 12, 0.4);
+    }
+
+    #network-canvas {
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Left panel: Legend & Filters */
+    .graph-legend {
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 10;
+        pointer-events: auto;
+        overflow-y: auto;
+        height: 100%;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        border: 1px solid transparent;
+    }
+
+    .dot-doc {
+        background: rgba(220, 38, 38, 0.1);
+        border-color: #dc2626;
+    }
+
+    .dot-tag {
+        background: rgba(127, 29, 29, 0.15);
+        border-color: #7f1d1d;
+    }
+
+    .dot-col {
+        background: rgba(239, 68, 68, 0.15);
+        border-color: #ef4444;
+    }
+
+    /* Node details panel - NOW A MODAL */
+    .node-details-panel {
+        display: none;
+        flex-direction: column;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 400px;
+        max-height: 85vh;
+        z-index: 2000;
+        padding: 24px;
+        overflow-y: auto;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Modal Backdrop */
+    .node-inspector-backdrop {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+        z-index: 1999;
+    }
+
+    .details-title {
+        font-family: var(--font-display);
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 20px;
+        color: white;
+    }
+
+    .details-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-grow: 1;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 14px;
+        padding: 20px;
+    }
+
+    .details-card {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 12px;
+    }
+
+    .meta-label {
+        font-size: 11px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .meta-value {
+        font-size: 14px;
+        color: var(--text-primary);
+    }
+
+    .tag-cloud {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+    }
+
+    .tag-pill {
+        font-size: 11px;
+        padding: 3px 8px;
+        background: rgba(220, 38, 38, 0.08);
+        border: 1px solid rgba(220, 38, 38, 0.2);
+        color: #f87171;
+        border-radius: 6px;
+        font-weight: 500;
+    }
+
+    .btn-action-panel {
+        display: block;
+        width: 100%;
+        text-align: center;
+        padding: 12px;
+        background: var(--accent-primary);
+        color: white;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: background 0.2s;
+        margin-top: 10px;
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+    }
+
+    .btn-action-panel:hover {
+        background: #b91c1c;
+    }
+
+    /* ===== MOBILE RESPONSIVE ===== */
+    @media (max-width: 992px) {
+        .graph-page-layout {
+            grid-template-columns: 1fr !important;
+            height: auto !important;
+            gap: 16px;
+        }
+
+        .graph-network-container {
+            height: 55vw !important;
+            min-height: 300px;
+            max-height: 440px;
+            grid-row: 1; /* Keep canvas on top for mobile */
+        }
+
+        .graph-legend {
+            width: 100% !important;
+            padding: 16px !important;
+            font-size: 12px;
+            grid-row: 2;
+        }
+
+        .node-details-panel {
+            height: auto !important;
+            max-height: 50vh;
+            overflow-y: auto;
+            padding: 16px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .graph-network-container {
+            height: 260px !important;
+        }
+
+        .graph-legend {
+            width: 160px !important;
+            font-size: 11px;
+        }
+
+        .details-title {
+            font-size: 15px;
+        }
+
+        .node-details-panel {
+            padding: 12px;
+        }
+
+        #graph-search-input {
+            font-size: 12px;
+            padding: 6px 10px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="top-navbar">
+    <h1 class="page-title">Knowledge Graph</h1>
+</div>
+
+<div class="graph-page-layout">
+    <!-- Left panel: Legend & Controls -->
+    <div class="glass-card graph-legend"
+        style="background: var(--bg-glass); backdrop-filter: blur(12px); border-radius: 12px; border: 1px solid var(--border-color);">
+            <div style="margin-bottom: 12px;">
+                <input type="text" id="graph-search-input" placeholder="Search node name..."
+                    style="width: 100%; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 12px; color: white; font-size: 13px; outline: none; transition: border-color 0.2s;">
+            </div>
+            <div
+                style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px;">
+                Filter Node Types</div>
+            <div class="legend-item"
+                style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;"
+                onclick="toggleGroupFilter('document')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="legend-dot dot-doc" id="filter-dot-document"
+                        style="box-shadow: 0 0 8px #dc2626; transition: all 0.2s;"></span>
+                    <span>Document Files</span>
+                </div>
+                <i data-lucide="check" class="filter-check" id="check-document"
+                    style="width: 14px; height: 14px; color: var(--accent-success);"></i>
+            </div>
+            <div class="legend-item"
+                style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;"
+                onclick="toggleGroupFilter('page')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="legend-dot" id="filter-dot-page"
+                        style="width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #10b981; background: #0f172a; box-shadow: 0 0 8px #10b981; transition: all 0.2s;"></span>
+                    <span>Document Pages (Queue)</span>
+                </div>
+                <i data-lucide="check" class="filter-check" id="check-page"
+                    style="width: 14px; height: 14px; color: var(--accent-success);"></i>
+            </div>
+            <div class="legend-item"
+                style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;"
+                onclick="toggleGroupFilter('concept')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="legend-dot" id="filter-dot-concept"
+                        style="width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid #3b82f6; background: #0f172a; box-shadow: 0 0 8px #3b82f6; transition: all 0.2s;"></span>
+                    <span>Semantic Concepts</span>
+                </div>
+                <i data-lucide="check" class="filter-check" id="check-concept"
+                    style="width: 14px; height: 14px; color: var(--accent-success);"></i>
+            </div>
+            <div class="legend-item"
+                style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;"
+                onclick="toggleGroupFilter('point')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="legend-dot" id="filter-dot-point"
+                        style="width: 12px; height: 12px; border-radius: 3px; border: 1.5px solid #f59e0b; background: #1c1917; box-shadow: 0 0 8px #f59e0b; transition: all 0.2s;"></span>
+                    <span>Key Takeaway Points</span>
+                </div>
+                <i data-lucide="check" class="filter-check" id="check-point"
+                    style="width: 14px; height: 14px; color: var(--accent-success);"></i>
+            </div>
+            <div class="legend-item"
+                style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;"
+                onclick="toggleGroupFilter('tag')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="legend-dot dot-tag" id="filter-dot-tag"
+                        style="box-shadow: 0 0 8px #7f1d1d; transition: all 0.2s;"></span>
+                    <span>AI Concepts / Tags</span>
+                </div>
+                <i data-lucide="check" class="filter-check" id="check-tag"
+                    style="width: 14px; height: 14px; color: var(--accent-success);"></i>
+            </div>
+            <div class="legend-item"
+                style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; width: 100%;"
+                onclick="toggleGroupFilter('collection')">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="legend-dot dot-col" id="filter-dot-collection"
+                        style="box-shadow: 0 0 8px #ef4444; transition: all 0.2s;"></span>
+                    <span>Collections</span>
+                </div>
+                <i data-lucide="check" class="filter-check" id="check-collection"
+                    style="width: 14px; height: 14px; color: var(--accent-success);"></i>
+            </div>
+            
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 16px 0; border-width: 1px 0 0 0; border-style: solid;">
+            <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px;">Vault Documents</div>
+            <div style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 400px; padding-right: 4px;">
+                {% for doc in documents %}
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='rgba(255,255,255,0.02)'" onclick="document.getElementById('graph-search-input').value = '{{ doc.name|escapejs }}'; if(window.applyFilters) window.applyFilters();">
+                    {% if doc.file_type == 'image' %}
+                    <img src="{{ doc.file.url }}" style="width: 32px; height: 32px; border-radius: 6px; object-fit: cover;" />
+                    {% elif doc.file_type == 'pdf' %}
+                    <div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(220,38,38,0.1); display: flex; align-items: center; justify-content: center; color: var(--accent-primary);"><i data-lucide="file-text" style="width: 16px; height: 16px;"></i></div>
+                    {% else %}
+                    <div style="width: 32px; height: 32px; border-radius: 6px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-muted);"><i data-lucide="file" style="width: 16px; height: 16px;"></i></div>
+                    {% endif %}
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 12px; font-weight: 600; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ doc.name }}</div>
+                        <div style="font-size: 10px; color: var(--text-muted); display: flex; gap: 6px; margin-top: 2px;">
+                            <span>{{ doc.file_type|upper }}</span>
+                            <span>{{ doc.created_at|date:"M d, Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="font-size: 11px; color: var(--text-muted); text-align: center; padding: 10px;">No documents found.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+    <!-- Middle: Graph Canvas Area -->
+    <div class="graph-network-container">
+        <!-- Canvas -->
+        <div id="network-canvas"></div>
+    </div>
+</div> <!-- Close graph-page-layout -->
+
+<!-- Modal Backdrop -->
+<div class="node-inspector-backdrop" id="inspector-backdrop" onclick="closeInspectorModal()"></div>
+
+<!-- Details Modal -->
+<div class="glass-card node-details-panel" id="node-inspector-modal">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 class="details-title" id="side-panel-title" style="margin: 0;">Node Inspector</h3>
+        <i data-lucide="x" style="cursor: pointer; width: 20px; height: 20px; color: var(--text-muted); transition: color 0.2s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='var(--text-muted)'" onclick="closeInspectorModal()"></i>
+    </div>
+
+        <!-- Empty State -->
+        <div class="details-empty" id="details-empty-state">
+            <i data-lucide="info" style="width: 32px; height: 32px; color: var(--text-muted); margin-bottom: 12px;"></i>
+            <p>Click any node in the knowledge network to inspect its relationships and metadata.</p>
+        </div>
+
+        <!-- Populated Details Card -->
+        <div class="details-card" id="details-populated-card" style="display: none;">
+            <div id="inspector-preview-container"
+                style="display: none; width: 100%; border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); background: rgba(0,0,0,0.25); margin-bottom: 8px; position: relative;">
+                <!-- Dynamic Preview (Image/File Icon) -->
+            </div>
+
+            <div class="meta-item">
+                <span class="meta-label" id="inspector-type-label">Node Type</span>
+                <span class="meta-value" style="font-size: 16px; font-weight: 700; color: white;"
+                    id="inspector-name">File Name</span>
+            </div>
+
+            <div class="meta-item" id="inspector-size-row">
+                <span class="meta-label">File Type / Size</span>
+                <span class="meta-value" id="inspector-size">PDF | 2.5 MB</span>
+            </div>
+
+            <div class="meta-item" id="inspector-desc-row">
+                <span class="meta-label">AI Caption / Summary</span>
+                <span class="meta-value" style="font-style: italic;" id="inspector-desc">"An image showing mountain
+                    landscapes..."</span>
+            </div>
+
+            <div class="meta-item" id="inspector-tags-row">
+                <span class="meta-label">Connected Tags</span>
+                <div class="tag-cloud" id="inspector-tags">
+                    <!-- Dynamic Tag Pills -->
+                </div>
+            </div>
+
+            <div id="inspector-actions" style="margin-top: 10px;">
+                <!-- Action Buttons -->
+            </div>
+
+            <!-- Interactive HUD Ask AI Input -->
+            <div id="inspector-hud-chat"
+                style="display: none; margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <span class="meta-label"
+                    style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px; font-weight: 600; font-size: 11px; text-transform: uppercase;">
+                    <i data-lucide="bot" style="width: 14px; height: 14px; color: var(--accent-primary);"></i>
+                    Ask AI about this Node
+                </span>
+                <div id="hud-chat-history"
+                    style="display: none; max-height: 140px; overflow-y: auto; background: rgba(0,0,0,0.25); border-radius: 8px; padding: 8px; margin-bottom: 8px; font-size: 12px; border: 1px solid var(--border-color); flex-direction: column; gap: 8px;">
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="hud-chat-input" placeholder="Type a question..."
+                        style="flex: 1; background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 10px; color: white; font-size: 12px; outline: none; transition: border-color 0.2s;"
+                        onkeydown="if(event.key === 'Enter') askInspectorAI()">
+                    <button onclick="askInspectorAI()"
+                        style="background: var(--accent-primary); border: none; color: white; border-radius: 6px; padding: 6px 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s;"
+                        onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                        <i data-lucide="send" style="width: 12px; height: 12px;"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Preview Modal -->
+<div id="preview-modal"
+    style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.92); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+    <span onclick="closePreviewModal()"
+        style="position: absolute; top: 20px; right: 30px; font-size: 36px; color: white; cursor: pointer; font-weight: bold; z-index: 1001; transition: color 0.2s;"
+        onmouseover="this.style.color='var(--accent-primary)'" onmouseout="this.style.color='white'">&times;</span>
+    <div id="modal-content-area"
+        style="max-width: 90%; max-height: 90%; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">
+        <!-- Image or Iframe PDF -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const container = document.getElementById('network-canvas');
+        const emptyState = document.getElementById('details-empty-state');
+        const populatedCard = document.getElementById('details-populated-card');
+
+        // Element bindings
+        const iTypeLabel = document.getElementById('inspector-type-label');
+        const iName = document.getElementById('inspector-name');
+        const iSizeRow = document.getElementById('inspector-size-row');
+        const iSize = document.getElementById('inspector-size');
+        const iDescRow = document.getElementById('inspector-desc-row');
+        const iDesc = document.getElementById('inspector-desc');
+        const iTagsRow = document.getElementById('inspector-tags-row');
+        const iTags = document.getElementById('inspector-tags');
+        const iActions = document.getElementById('inspector-actions');
+        const previewContainer = document.getElementById('inspector-preview-container');
+
+        let network = null;
+        let visData = null;
+        let originalNodes = [];
+        let originalEdges = [];
+        let activeGroupFilters = {
+            document: true,
+            page: true,
+            concept: true,
+            point: true,
+            tag: true,
+            collection: true
+        };
+
+        // Fetch network structure
+        fetch('{% url "graph_data_api" %}')
+            .then(res => res.json())
+            .then(data => {
+                if (data.nodes.length === 0) {
+                    container.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted);">
+                            No data available. Upload files to generate relationships.
+                        </div>`;
+                    return;
+                }
+
+                // Format nodes for Vis.js
+                originalNodes = data.nodes.map(node => {
+                    let groupStyle = {};
+                    if (node.group === 'tag') {
+                        groupStyle = {
+                            shape: 'dot',
+                            size: 15,
+                            color: {
+                                background: '#7f1d1d',
+                                border: '#b91c1c',
+                                hover: { background: '#991b1b', border: '#ef4444' },
+                                highlight: { background: '#dc2626', border: '#f87171' }
+                            },
+                            font: { color: '#fca5a5', size: 12, face: 'var(--font-main)' }
+                        };
+                    } else if (node.group === 'collection') {
+                        groupStyle = {
+                            shape: 'box',
+                            margin: 10,
+                            color: {
+                                background: '#1e1b4b',
+                                border: '#ef4444',
+                                hover: { background: '#312e81', border: '#f87171' },
+                                highlight: { background: '#4338ca', border: '#fca5a5' }
+                            },
+                            font: { color: 'white', size: 14, face: 'var(--font-display)', bold: true }
+                        };
+                    } else if (node.group === 'concept') {
+                        groupStyle = {
+                            shape: 'diamond',
+                            size: 18,
+                            color: {
+                                background: '#0c1f3f',
+                                border: '#3b82f6',
+                                hover: { background: '#1e3a5f', border: '#60a5fa' },
+                                highlight: { background: '#1e3a5f', border: '#93c5fd' }
+                            },
+                            font: { color: '#93c5fd', size: 12, face: 'var(--font-main)', bold: true }
+                        };
+                    } else if (node.group === 'page') {
+                        groupStyle = {
+                            shape: 'circle',
+                            color: {
+                                background: '#0f172a',
+                                border: '#10b981',
+                                hover: { background: '#1e293b', border: '#34d399' },
+                                highlight: { background: '#1e293b', border: '#34d399' }
+                            },
+                            font: { color: '#a7f3d0', size: 11, face: 'var(--font-main)' }
+                        };
+                    } else if (node.group === 'point') {
+                        groupStyle = {
+                            shape: 'box',
+                            margin: 6,
+                            color: {
+                                background: '#1c1917',
+                                border: '#f59e0b',
+                                hover: { background: '#292524', border: '#fbbf24' },
+                                highlight: { background: '#292524', border: '#fbbf24' }
+                            },
+                            font: { color: '#fef08a', size: 10, face: 'var(--font-main)' }
+                        };
+                    } else { // Documents
+                        const colorsMap = {
+                            'image': '#064e3b',
+                            'pdf': '#701a75',
+                            'docx': '#1e3a8a',
+                            'text': '#14532d',
+                            'zip': '#7c2d12',
+                            'document': '#1e293b'
+                        };
+                        const borderMap = {
+                            'image': '#10b981',
+                            'pdf': '#d946ef',
+                            'docx': '#3b82f6',
+                            'text': '#22c55e',
+                            'zip': '#ea580c',
+                            'document': '#64748b'
+                        };
+                        const baseColor = colorsMap[node.group] || '#1e293b';
+                        const borderColor = borderMap[node.group] || '#64748b';
+
+                        groupStyle = {
+                            shape: 'box',
+                            margin: 8,
+                            color: {
+                                background: baseColor,
+                                border: borderColor,
+                                hover: { background: 'rgba(255,255,255,0.05)', border: '#dc2626' },
+                                highlight: { background: 'rgba(255,255,255,0.08)', border: '#dc2626' }
+                            },
+                            font: { color: 'white', size: 12, face: 'var(--font-main)' }
+                        };
+                    }
+
+                    return {
+                        id: node.id,
+                        label: node.label,
+                        title: 'Click to inspect node details',
+                        raw: node,
+                        ...groupStyle
+                    };
+                });
+
+                const uniqueEdgeIds = new Set();
+                originalEdges = [];
+                data.edges.forEach(edge => {
+                    const edgeId = `${edge.from}_to_${edge.to}`;
+                    if (!uniqueEdgeIds.has(edgeId)) {
+                        uniqueEdgeIds.add(edgeId);
+                        originalEdges.push({
+                            id: edgeId,
+                            from: edge.from,
+                            to: edge.to,
+                            color: {
+                                color: edge.color && edge.color.color ? edge.color.color : 'rgba(220,38,38,0.4)',
+                                opacity: edge.color && edge.color.opacity ? edge.color.opacity : 0.4
+                            },
+                            width: 1.5
+                        });
+                    }
+                });
+
+                visData = {
+                    nodes: new vis.DataSet(originalNodes),
+                    edges: new vis.DataSet(originalEdges)
+                };
+
+                const options = {
+                    interaction: {
+                        hover: true,
+                        tooltipDelay: 150,
+                        selectable: true,
+                        selectConnectedEdges: false
+                    },
+                    edges: {
+                        width: 1.5,
+                        selectionWidth: 0,
+                        arrows: { to: { enabled: false } },
+                        color: { inherit: false }
+                    },
+                    physics: {
+                        solver: 'forceAtlas2Based',
+                        forceAtlas2Based: {
+                            gravitationalConstant: -100,
+                            centralGravity: 0.015,
+                            springLength: 120,
+                            springConstant: 0.07,
+                            damping: 0.4
+                        },
+                        stabilization: { iterations: 40 }
+                    }
+                };
+
+                network = new vis.Network(container, visData, options);
+
+                // Setup node selection
+                network.on("click", function (params) {
+                    if (params.nodes.length > 0) {
+                        const nodeId = params.nodes[0];
+                        const selectedNode = originalNodes.find(n => n.id === nodeId);
+
+                        if (selectedNode) {
+                            highlightConnections(nodeId);
+                            showInspector(selectedNode);
+                            document.getElementById('node-inspector-modal').style.display = 'flex';
+                            document.getElementById('inspector-backdrop').style.display = 'block';
+                        }
+                    } else {
+                        if (window.closeInspectorModal) window.closeInspectorModal();
+                    }
+                });
+
+                window.closeInspectorModal = function() {
+                    document.getElementById('node-inspector-modal').style.display = 'none';
+                    document.getElementById('inspector-backdrop').style.display = 'none';
+                    resetHighlights();
+                };
+
+                window.toggleGroupFilter = function (groupType) {
+                    activeGroupFilters[groupType] = !activeGroupFilters[groupType];
+                    const dot = document.getElementById(`filter-dot-${groupType}`);
+                    const check = document.getElementById(`check-${groupType}`);
+                    if (activeGroupFilters[groupType]) {
+                        dot.style.opacity = '1';
+                        let shadowColor = '#dc2626';
+                        if (groupType === 'tag') shadowColor = '#7f1d1d';
+                        else if (groupType === 'collection') shadowColor = '#ef4444';
+                        else if (groupType === 'page') shadowColor = '#10b981';
+                        else if (groupType === 'point') shadowColor = '#f59e0b';
+                        dot.style.boxShadow = `0 0 8px ${shadowColor}`;
+                        check.style.display = 'block';
+                    } else {
+                        dot.style.opacity = '0.3';
+                        dot.style.boxShadow = 'none';
+                        check.style.display = 'none';
+                    }
+                    applyFilters();
+                };
+
+                function applyFilters() {
+                    const searchVal = document.getElementById('graph-search-input').value.toLowerCase().trim();
+
+                    // 1. Get base group filtered nodes
+                    let baseFilteredNodes = originalNodes.filter(node => {
+                        const grp = node.raw.group;
+                        const isDocNode = grp !== 'tag' && grp !== 'collection' && grp !== 'page' && grp !== 'point' && grp !== 'concept';
+                        if (isDocNode) return activeGroupFilters['document'];
+                        if (grp === 'concept') return activeGroupFilters['concept'];
+                        return activeGroupFilters[grp] !== undefined ? activeGroupFilters[grp] : true;
+                    });
+
+                    // 2. Identify nodes matching search string
+                    let searchMatches = baseFilteredNodes.filter(node =>
+                        node.label.toLowerCase().includes(searchVal)
+                    );
+
+                    // 3. Collect matching node IDs and their full subgraph (BFS up to depth 3)
+                    const visibleNodeIds = new Set();
+                    const queue = [];
+                    
+                    searchMatches.forEach(node => {
+                        visibleNodeIds.add(node.id);
+                        queue.push({ id: node.id, depth: 0 });
+                    });
+
+                    // Build adjacency list for fast BFS
+                    const adj = {};
+                    originalEdges.forEach(edge => {
+                        if (!adj[edge.from]) adj[edge.from] = [];
+                        if (!adj[edge.to]) adj[edge.to] = [];
+                        adj[edge.from].push(edge.to);
+                        adj[edge.to].push(edge.from);
+                    });
+
+                    // BFS to find all connected nodes up to depth 3 (Doc -> Concept -> Page -> Point)
+                    while (queue.length > 0) {
+                        const curr = queue.shift();
+                        if (curr.depth >= 3) continue;
+
+                        const neighbors = adj[curr.id] || [];
+                        for (let nId of neighbors) {
+                            if (!visibleNodeIds.has(nId)) {
+                                visibleNodeIds.add(nId);
+                                
+                                // Do not traverse *through* tags or collections to other documents
+                                const neighborNode = originalNodes.find(n => n.id === nId);
+                                if (neighborNode && neighborNode.raw.group !== 'tag' && neighborNode.raw.group !== 'collection') {
+                                    queue.push({ id: nId, depth: curr.depth + 1 });
+                                }
+                            }
+                        }
+                    }
+
+                    // If search is empty, just display all group filtered nodes
+                    const finalNodes = (searchVal === '')
+                        ? baseFilteredNodes
+                        : baseFilteredNodes.filter(n => visibleNodeIds.has(n.id));
+
+                    const finalNodeIds = new Set(finalNodes.map(n => n.id));
+
+                    const finalEdges = originalEdges.filter(edge => {
+                        return finalNodeIds.has(edge.from) && finalNodeIds.has(edge.to);
+                    });
+
+                    visData.nodes.clear();
+                    visData.nodes.add(finalNodes);
+                    visData.edges.clear();
+                    visData.edges.add(finalEdges);
+
+                    if (network) {
+                        network.fit();
+                    }
+                }
+
+                document.getElementById('graph-search-input').addEventListener('input', applyFilters);
+                window.applyFilters = applyFilters;
+
+                function highlightConnections(selectedNodeId) {
+                    const connectedNodeIds = new Set(network.getConnectedNodes(selectedNodeId));
+                    connectedNodeIds.add(selectedNodeId);
+
+                    const updatedNodes = visData.nodes.get().map(node => {
+                        const isConnected = connectedNodeIds.has(node.id);
+                        return {
+                            id: node.id,
+                            opacity: isConnected ? 1 : 0.15,
+                            font: {
+                                color: isConnected ? (node.group === 'tag' ? '#fca5a5' : 'white') : 'rgba(255,255,255,0.15)'
+                            }
+                        };
+                    });
+
+                    const updatedEdges = visData.edges.get().map(edge => {
+                        const isConnected = edge.from === selectedNodeId || edge.to === selectedNodeId;
+                        const origEdge = originalEdges.find(e => e.from === edge.from && e.to === edge.to);
+                        const defaultColor = origEdge ? origEdge.color.color : 'rgba(220,38,38,0.4)';
+
+                        return {
+                            id: edge.id,
+                            color: {
+                                color: isConnected ? defaultColor : 'rgba(255,255,255,0.05)',
+                                opacity: isConnected ? 1 : 0.05
+                            },
+                            width: isConnected ? 3 : 1
+                        };
+                    });
+
+                    visData.nodes.update(updatedNodes);
+                    visData.edges.update(updatedEdges);
+                }
+
+                function resetHighlights() {
+                    const updatedNodes = visData.nodes.get().map(node => {
+                        let fontColor = 'white';
+                        if (node.group === 'tag') fontColor = '#fca5a5';
+                        return {
+                            id: node.id,
+                            opacity: 1,
+                            font: { color: fontColor }
+                        };
+                    });
+
+                    const updatedEdges = visData.edges.get().map(edge => {
+                        const origEdge = originalEdges.find(e => e.from === edge.from && e.to === edge.to);
+                        return {
+                            id: edge.id,
+                            color: {
+                                color: origEdge ? origEdge.color.color : 'rgba(220,38,38,0.4)',
+                                opacity: origEdge ? origEdge.color.opacity : 0.4
+                            },
+                            width: 1.5
+                        };
+                    });
+
+                    visData.nodes.update(updatedNodes);
+                    visData.edges.update(updatedEdges);
+                }
+
+                function showInspector(selectedNode) {
+                    const raw = selectedNode.raw;
+                    emptyState.style.display = 'none';
+                    populatedCard.style.display = 'flex';
+
+                    const hudPanel = document.getElementById('inspector-hud-chat');
+                    const hudHistory = document.getElementById('hud-chat-history');
+                    const hudInput = document.getElementById('hud-chat-input');
+
+                    // Clear HUD Chat states
+                    hudHistory.innerHTML = '';
+                    hudHistory.style.display = 'none';
+                    hudInput.value = '';
+                    window.currentInspectorDocId = null;
+                    window.currentInspectorTag = null;
+
+                    if (raw.id.startsWith('doc_')) {
+                        const docId = raw.id.split('_')[1];
+                        iTypeLabel.textContent = `DOCUMENT (${raw.group.toUpperCase()})`;
+                        iName.textContent = raw.label;
+
+                        iSizeRow.style.display = 'flex';
+                        iDescRow.style.display = 'flex';
+
+                        let titleHtml = raw.title || '';
+                        let parsedCaption = raw.ai_caption || "No caption generated.";
+                        let parsedSize = "N/A";
+
+                        const sizeMatch = titleHtml.match(/Size:\s*([^\s<]*\s*\w+)/i);
+                        if (sizeMatch && sizeMatch[1]) {
+                            parsedSize = sizeMatch[1];
+                        }
+
+                        iSize.textContent = `${raw.group.toUpperCase()} | ${parsedSize}`;
+                        iDesc.textContent = `"${parsedCaption}"`;
+
+                        // Handle Preview
+                        previewContainer.style.display = 'block';
+                        if (raw.group === 'image') {
+                            previewContainer.innerHTML = `<img src="${raw.file_url}" style="width: 100%; height: auto; max-height: 180px; object-fit: contain; display: block;" />`;
+                        } else if (raw.group === 'pdf') {
+                            previewContainer.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100px; color: var(--text-secondary); background: rgba(220,38,38,0.02);"><i data-lucide="file-text" style="width: 36px; height: 36px; color: var(--accent-primary);"></i><span style="font-size: 11px; margin-top: 6px; font-weight:600;">PDF Document</span></div>`;
+                        } else {
+                            previewContainer.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100px; color: var(--text-secondary); background: rgba(255,255,255,0.01);"><i data-lucide="file" style="width: 36px; height: 36px; color: var(--text-muted);"></i><span style="font-size: 11px; margin-top: 6px; font-weight:600;">Document File</span></div>`;
+                        }
+
+                        const connectedEdges = originalEdges.filter(e => e.from === raw.id && e.to.startsWith('tag_'));
+
+                        iTagsRow.style.display = 'flex';
+                        iTags.innerHTML = '';
+                        if (connectedEdges.length > 0) {
+                            connectedEdges.forEach(e => {
+                                const tagWord = e.to.split('_')[1];
+                                const pill = document.createElement('span');
+                                pill.className = 'tag-pill';
+                                pill.textContent = tagWord;
+                                iTags.appendChild(pill);
+                            });
+                        } else {
+                            iTags.innerHTML = '<span style="font-size:12px; color:var(--text-muted);">No semantic concepts associated.</span>';
+                        }
+
+                        // Action buttons grid
+                        iActions.innerHTML = `
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+                                <a href="/chat/" class="btn-action-panel" style="margin-top:0;">
+                                    Chat with File
+                                </a>
+                                <div style="display: flex; gap: 8px;">
+                                    <a href="${raw.file_url}" download class="btn-action-panel" style="flex: 1; margin-top:0; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); color: white; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px;">
+                                        <i data-lucide="download" style="width: 14px; height: 14px;"></i> Download
+                                    </a>
+                                    <button onclick="zoomFile('${raw.file_url}', '${raw.group}')" class="btn-action-panel" style="flex: 1; margin-top:0; background: var(--accent-primary); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px;">
+                                        <i data-lucide="maximize-2" style="width: 14px; height: 14px;"></i> Zoom
+                                    </button>
+                                </div>
+                            </div>`;
+
+                        // Show HUD chat
+                        hudPanel.style.display = 'block';
+                        window.currentInspectorDocId = docId;
+
+                    } else if (raw.id.startsWith('concept_') || raw.id.startsWith('sub_')) {
+                        // Concept or sub-chunk node
+                        iTypeLabel.textContent = `PAGE CHUNK NODE (${raw.doc_name || 'Document'})`;
+                        iName.textContent = raw.label;
+
+                        iSizeRow.style.display = raw.page_number ? 'flex' : 'none';
+                        if (raw.page_number) {
+                            iSize.textContent = `Page ${raw.page_number}`;
+                        }
+                        iDescRow.style.display = 'flex';
+                        iDesc.textContent = raw.chunk_text || (raw.title || '').replace(/<[^>]+>/g, ' ').trim();
+                        iTagsRow.style.display = 'none';
+
+                        previewContainer.style.display = 'block';
+                        previewContainer.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100px; color: var(--text-secondary); background: rgba(59,130,246,0.04);"><i data-lucide="brain" style="width: 36px; height: 36px; color: #3b82f6;"></i><span style="font-size: 11px; margin-top: 6px; font-weight:600;">Semantic Concept Node</span></div>`;
+
+                        iActions.innerHTML = `
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+                                <a href="/chat/" class="btn-action-panel" style="margin-top:0;">
+                                    Chat with Parent File
+                                </a>
+                            </div>`;
+
+                        hudPanel.style.display = 'block';
+                        window.currentInspectorDocId = raw.doc_id || 'all';
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                    } else if (raw.id.startsWith('page_')) {
+                        const docId = raw.id.split('_')[1];
+                        iTypeLabel.textContent = `PAGE CHUNK NODE (${raw.doc_name || 'Document'})`;
+                        iName.textContent = raw.label;
+
+                        iSizeRow.style.display = 'none';
+                        iDescRow.style.display = 'flex';
+                        iDesc.textContent = raw.chunk_text || (raw.title || '').replace(/<[^>]+>/g, ' ').trim();
+                        iTagsRow.style.display = 'none';
+
+                        // Handle Preview linked to parent document
+                        previewContainer.style.display = 'block';
+                        if (raw.doc_group === 'image') {
+                            previewContainer.innerHTML = `<img src="${raw.file_url}" style="width: 100%; height: auto; max-height: 180px; object-fit: contain; display: block;" />`;
+                        } else if (raw.doc_group === 'pdf') {
+                            previewContainer.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100px; color: var(--text-secondary); background: rgba(220,38,38,0.02);"><i data-lucide="file-text" style="width: 36px; height: 36px; color: var(--accent-primary);"></i><span style="font-size: 11px; margin-top: 6px; font-weight:600;">PDF Parent Document</span></div>`;
+                        } else {
+                            previewContainer.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100px; color: var(--text-secondary); background: rgba(255,255,255,0.01);"><i data-lucide="file" style="width: 36px; height: 36px; color: var(--text-muted);"></i><span style="font-size: 11px; margin-top: 6px; font-weight:600;">Parent Document File</span></div>`;
+                        }
+
+                        // Action buttons linked to parent document
+                        iActions.innerHTML = `
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+                                <a href="/chat/" class="btn-action-panel" style="margin-top:0;">
+                                    Chat with Parent File
+                                </a>
+                                <div style="display: flex; gap: 8px;">
+                                    <a href="${raw.file_url}" download class="btn-action-panel" style="flex: 1; margin-top:0; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); color: white; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px;">
+                                        <i data-lucide="download" style="width: 14px; height: 14px;"></i> Download
+                                    </a>
+                                    <button onclick="zoomFile('${raw.file_url}', '${raw.doc_group}')" class="btn-action-panel" style="flex: 1; margin-top:0; background: var(--accent-primary); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px;">
+                                        <i data-lucide="maximize-2" style="width: 14px; height: 14px;"></i> Zoom
+                                    </button>
+                                </div>
+                            </div>`;
+
+                        // Show HUD chat linked to parent document
+                        hudPanel.style.display = 'block';
+                        window.currentInspectorDocId = docId;
+
+                    } else if (raw.id.startsWith('point_')) {
+                        const docId = raw.id.split('_')[1];
+                        iTypeLabel.textContent = `KEY TAKEAWAY / POINT (${raw.doc_name})`;
+                        iName.textContent = "Takeaway Detail";
+
+                        iSizeRow.style.display = 'none';
+                        iDescRow.style.display = 'flex';
+                        iDesc.textContent = `"${raw.title}"`;
+                        iTagsRow.style.display = 'none';
+
+                        // Handle Preview linked to parent document
+                        previewContainer.style.display = 'block';
+                        if (raw.doc_group === 'image') {
+                            previewContainer.innerHTML = `<img src="${raw.file_url}" style="width: 100%; height: auto; max-height: 180px; object-fit: contain; display: block;" />`;
+                        } else if (raw.doc_group === 'pdf') {
+                            previewContainer.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100px; color: var(--text-secondary); background: rgba(220,38,38,0.02);"><i data-lucide="file-text" style="width: 36px; height: 36px; color: var(--accent-primary);"></i><span style="font-size: 11px; margin-top: 6px; font-weight:600;">PDF Parent Document</span></div>`;
+                        } else {
+                            previewContainer.innerHTML = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100px; color: var(--text-secondary); background: rgba(255,255,255,0.01);"><i data-lucide="file" style="width: 36px; height: 36px; color: var(--text-muted);"></i><span style="font-size: 11px; margin-top: 6px; font-weight:600;">Parent Document File</span></div>`;
+                        }
+
+                        // Action buttons linked to parent document
+                        iActions.innerHTML = `
+                            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px;">
+                                <a href="/chat/" class="btn-action-panel" style="margin-top:0;">
+                                    Chat with Parent File
+                                </a>
+                                <div style="display: flex; gap: 8px;">
+                                    <a href="${raw.file_url}" download class="btn-action-panel" style="flex: 1; margin-top:0; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); color: white; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px;">
+                                        <i data-lucide="download" style="width: 14px; height: 14px;"></i> Download
+                                    </a>
+                                    <button onclick="zoomFile('${raw.file_url}', '${raw.doc_group}')" class="btn-action-panel" style="flex: 1; margin-top:0; background: var(--accent-primary); border: none; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px;">
+                                        <i data-lucide="maximize-2" style="width: 14px; height: 14px;"></i> Zoom
+                                    </button>
+                                </div>
+                            </div>`;
+
+                        // Show HUD chat linked to parent document
+                        hudPanel.style.display = 'block';
+                        window.currentInspectorDocId = docId;
+
+                    } else if (raw.id.startsWith('tag_')) {
+                        previewContainer.style.display = 'none';
+                        const tagWord = raw.id.split('_')[1];
+                        iTypeLabel.textContent = "AI CONCEPT NODE";
+                        iName.textContent = `#${tagWord}`;
+
+                        iSizeRow.style.display = 'none';
+                        iDescRow.style.display = 'none';
+
+                        const connectedEdges = originalEdges.filter(e => e.to === raw.id && e.from.startsWith('doc_'));
+
+                        iTagsRow.style.display = 'flex';
+                        iTags.innerHTML = '';
+                        connectedEdges.forEach(e => {
+                            const docNode = originalNodes.find(n => n.id === e.from);
+                            if (docNode) {
+                                const pill = document.createElement('span');
+                                pill.className = 'tag-pill';
+                                pill.style.background = 'rgba(255,255,255,0.03)';
+                                pill.style.borderColor = 'var(--border-color)';
+                                pill.style.color = 'var(--text-secondary)';
+                                pill.textContent = docNode.label;
+                                iTags.appendChild(pill);
+                            }
+                        });
+
+                        iActions.innerHTML = '';
+
+                        // Show HUD chat for tag
+                        hudPanel.style.display = 'block';
+                        window.currentInspectorDocId = 'all';
+                        window.currentInspectorTag = tagWord;
+
+                    } else if (raw.id.startsWith('col_')) {
+                        previewContainer.style.display = 'none';
+                        hudPanel.style.display = 'none';
+                        const colId = raw.id.split('_')[1];
+                        iTypeLabel.textContent = "COLLECTION NODE";
+                        iName.textContent = raw.label;
+
+                        iSizeRow.style.display = 'none';
+                        iDescRow.style.display = 'none';
+
+                        const connectedEdges = originalEdges.filter(e => e.to === raw.id && e.from.startsWith('doc_'));
+
+                        iTagsRow.style.display = 'flex';
+                        iTags.innerHTML = '';
+                        connectedEdges.forEach(e => {
+                            const docNode = originalNodes.find(n => n.id === e.from);
+                            if (docNode) {
+                                const pill = document.createElement('span');
+                                pill.className = 'tag-pill';
+                                pill.style.background = 'rgba(255,255,255,0.03)';
+                                pill.style.borderColor = 'var(--border-color)';
+                                pill.style.color = 'var(--text-secondary)';
+                                pill.textContent = docNode.label;
+                                iTags.appendChild(pill);
+                            }
+                        });
+
+                        iActions.innerHTML = '';
+                    }
+
+                    if (window.lucide) {
+                        window.lucide.createIcons();
+                    }
+                }
+            })
+            .catch(err => {
+                console.error("Error loading graph:", err);
+                const container = document.getElementById('network-canvas');
+                if (container) {
+                    container.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #ef4444; font-size: 13px; font-weight: 600; gap: 8px; padding: 20px; text-align: center;">
+                            <i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: #ef4444;"></i>
+                            <span>Failed to load Knowledge Graph data: ${err.message}</span>
+                        </div>`;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            });
+    });
+
+    window.zoomFile = function (url, fileType) {
+        const modal = document.getElementById('preview-modal');
+        const contentArea = document.getElementById('modal-content-area');
+        contentArea.innerHTML = '';
+
+        if (fileType === 'image') {
+            contentArea.innerHTML = `<img src="${url}" style="max-width: 90vw; max-height: 85vh; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); object-fit: contain;" />`;
+        } else if (fileType === 'pdf') {
+            contentArea.innerHTML = `<iframe src="${url}" style="width: 80vw; height: 80vh; border: none; border-radius: 8px; background: white;"></iframe>`;
+        } else {
+            contentArea.innerHTML = `<div style="color: white; font-size: 16px; text-align: center; padding: 40px; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">Preview not supported for this file type. Please click Download to view.</div>`;
+        }
+
+        modal.style.display = 'flex';
+    };
+
+    window.closePreviewModal = function () {
+        document.getElementById('preview-modal').style.display = 'none';
+    };
+
+    window.askInspectorAI = function () {
+        const docId = window.currentInspectorDocId;
+        const tag = window.currentInspectorTag;
+        const input = document.getElementById('hud-chat-input');
+        const history = document.getElementById('hud-chat-history');
+        const query = input.value.trim();
+
+        if (!query) return;
+
+        // Show history
+        history.style.display = 'flex';
+
+        // Render user query
+        const uBubble = document.createElement('div');
+        uBubble.style.alignSelf = 'flex-end';
+        uBubble.style.background = 'rgba(220, 38, 38, 0.15)';
+        uBubble.style.padding = '6px 10px';
+        uBubble.style.borderRadius = '8px 8px 0 8px';
+        uBubble.style.maxWidth = '90%';
+        uBubble.style.color = '#fca5a5';
+        uBubble.textContent = query;
+        history.appendChild(uBubble);
+
+        // Clear input
+        input.value = '';
+
+        // Render loading state
+        const lBubble = document.createElement('div');
+        lBubble.style.alignSelf = 'flex-start';
+        lBubble.style.background = 'rgba(255, 255, 255, 0.05)';
+        lBubble.style.padding = '6px 10px';
+        lBubble.style.borderRadius = '8px 8px 8px 0';
+        lBubble.style.maxWidth = '95%';
+        lBubble.innerHTML = '<span style="font-style: italic; color: var(--text-muted);">Thinking...</span>';
+        history.appendChild(lBubble);
+        history.scrollTop = history.scrollHeight;
+
+        let finalMessage = query;
+        if (tag) {
+            finalMessage = `Regarding the concept tag #${tag} in my files: ${query}`;
+        }
+
+        // POST to message API
+        fetch('/chat/message/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                document_id: docId || 'all',
+                message: finalMessage,
+                session_id: 'new'
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.response) {
+                    lBubble.innerHTML = marked.parse(data.response);
+                } else {
+                    lBubble.innerHTML = `<span style="color:var(--accent-primary);">Error processing request.</span>`;
+                }
+                history.scrollTop = history.scrollHeight;
+            })
+            .catch(err => {
+                lBubble.innerHTML = `<span style="color:var(--accent-primary);">Connection error.</span>`;
+                history.scrollTop = history.scrollHeight;
+            });
+    };
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

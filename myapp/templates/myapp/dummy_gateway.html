@@ -1,0 +1,497 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Razorpay Secure Checkout</title>
+    <!-- Outfit Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-blue: #2358e6;
+            --brand-dark: #1b45b9;
+            --bg-gray: #f8fafc;
+            --border-color: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* 2-Pane SaaS Checkout Layout */
+        .checkout-container {
+            display: flex;
+            background: white;
+            width: 100%;
+            max-width: 850px;
+            height: 500px;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        /* Left Sidebar: Blue brand summary */
+        .sidebar {
+            width: 320px;
+            background: linear-gradient(135deg, var(--brand-blue) 0%, #1a3a99 100%);
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+            position: relative;
+        }
+
+        .brand-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo-box {
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: 800;
+            width: 38px;
+            height: 38px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 24px;
+        }
+
+        .summary-label {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-price {
+            font-size: 26px;
+            font-weight: 800;
+            margin-top: 4px;
+        }
+
+        .user-badge {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 14px;
+            font-size: 12px;
+        }
+
+        .user-badge-icon {
+            opacity: 0.8;
+            font-size: 16px;
+        }
+
+        .user-badge-details {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-badge-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .user-badge-email {
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Stylized Servers & Coins Graphics at bottom left */
+        .sidebar-graphics {
+            opacity: 0.15;
+            margin-top: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 100px;
+        }
+
+        .secured-by-banner {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 20px;
+        }
+
+        .secured-by-banner strong {
+            color: white;
+            font-weight: 700;
+        }
+
+        /* Right Content Panel: Razorpay Checkout Form */
+        .main-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 12px;
+            color: var(--text-muted);
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Split content inside the main panel */
+        .panel-content {
+            display: flex;
+            flex-grow: 1;
+            height: calc(100% - 61px);
+        }
+
+        /* Left sub-column: Payment method sidebar */
+        .methods-sidebar {
+            width: 180px;
+            background: #fafafb;
+            border-right: 1px solid var(--border-color);
+            padding: 16px 0;
+        }
+
+        .method-tab {
+            padding: 12px 24px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            border-left: 3px solid transparent;
+        }
+
+        .method-tab.active {
+            color: var(--brand-blue);
+            background: white;
+            border-left-color: var(--brand-blue);
+        }
+
+        /* Right sub-column: Payment fields form */
+        .form-area {
+            flex-grow: 1;
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .form-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .form-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .card-networks-icons {
+            display: flex;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Card Inputs styling resembling actual form fields */
+        .card-fields-box {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .field-input-row {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .field-input-row:last-child {
+            border-bottom: none;
+        }
+
+        .card-input {
+            width: 100%;
+            border: none;
+            padding: 12px 16px;
+            font-size: 14px;
+            outline: none;
+            color: var(--text-dark);
+            background: white;
+        }
+
+        .card-input::placeholder {
+            color: #cbd5e1;
+        }
+
+        .half-width {
+            width: 50%;
+        }
+
+        .half-width:first-child {
+            border-right: 1px solid var(--border-color);
+        }
+
+        /* Checkbox wrapper */
+        .checkbox-container {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .checkbox-input {
+            margin-top: 3px;
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: var(--brand-blue);
+        }
+
+        .checkbox-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            cursor: pointer;
+        }
+
+        .checkbox-label strong {
+            color: var(--text-dark);
+        }
+
+        /* Bottom action buttons */
+        .action-row {
+            display: flex;
+            gap: 12px;
+            margin-top: auto;
+        }
+
+        .btn-continue {
+            flex-grow: 2;
+            background: #0f172a;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+        }
+
+        .btn-continue:hover {
+            background: var(--text-dark);
+        }
+
+        .btn-cancel {
+            flex-grow: 1;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn-cancel:hover {
+            background: #f1f5f9;
+            color: var(--text-dark);
+        }
+    </style>
+</head>
+<body>
+    <div class="checkout-container">
+        <!-- Left Pane: Blue Summary Sidebar -->
+        <div class="sidebar">
+            <div class="brand-header">
+                <div class="brand-logo-box">A</div>
+                <div class="brand-name">Authlab</div>
+            </div>
+
+            <div>
+                <div class="summary-card">
+                    <div class="summary-label">Price Summary</div>
+                    <div class="summary-price">US$10</div>
+                </div>
+
+                <div class="user-badge">
+                    <span class="user-badge-icon">👤</span>
+                    <div class="user-badge-details">
+                        <span class="user-badge-label">Using as</span>
+                        <span class="user-badge-email" title="{{ request.user.email }}">{{ request.user.email }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stylized CSS Graphic matching mockup banner -->
+            <div class="sidebar-graphics">
+                <svg width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="20" y="40" width="35" height="25" rx="4" fill="white" fill-opacity="0.2"/>
+                    <rect x="65" y="30" width="35" height="35" rx="4" fill="white" fill-opacity="0.3"/>
+                    <circle cx="45" cy="20" r="12" fill="white" fill-opacity="0.1"/>
+                    <circle cx="80" cy="15" r="8" fill="white" fill-opacity="0.15"/>
+                </svg>
+            </div>
+
+            <div class="secured-by-banner">
+                <span>Secured by</span>
+                <strong>Razorpay</strong>
+            </div>
+        </div>
+
+        <!-- Right Pane: Payment Options -->
+        <div class="main-panel">
+            <div class="panel-header">
+                <span class="panel-title">Payment Options</span>
+                <div class="window-controls">
+                    <span>•••</span>
+                    <span onclick="window.location.href='{% url 'dashboard' %}'">✕</span>
+                </div>
+            </div>
+
+            <div class="panel-content">
+                <!-- sub-sidebar methods list -->
+                <div class="methods-sidebar">
+                    <div class="method-tab active">
+                        <span>💳</span> Cards
+                    </div>
+                    <div class="method-tab" style="opacity: 0.5; cursor: not-allowed;">
+                        <span>📱</span> UPI
+                    </div>
+                    <div class="method-tab" style="opacity: 0.5; cursor: not-allowed;">
+                        <span>🏦</span> Netbanking
+                    </div>
+                </div>
+
+                <!-- fields form -->
+                <div class="form-area">
+                    <div>
+                        <div class="form-header-row">
+                            <span class="form-section-title">Add a new card</span>
+                            <div class="card-networks-icons">
+                                <span>Visa</span> • <span>Mastercard</span> • <span>RuPay</span>
+                            </div>
+                        </div>
+
+                        <!-- Card Fields Box -->
+                        <div class="card-fields-box">
+                            <div class="field-input-row">
+                                <input type="text" class="card-input" placeholder="Card Number" value="4111 2222 3333 4444" disabled>
+                            </div>
+                            <div class="field-input-row">
+                                <div class="half-width">
+                                    <input type="text" class="card-input" placeholder="MM / YY" value="12 / 29" disabled>
+                                </div>
+                                <div class="half-width">
+                                    <input type="text" class="card-input" placeholder="CVV" value="123" disabled style="-webkit-text-security: disc;">
+                                </div>
+                            </div>
+                            <div class="field-input-row">
+                                <input type="text" class="card-input" placeholder="Cardholder Name" value="{{ request.user.username|title }}" disabled>
+                            </div>
+                        </div>
+
+                        <!-- Checkbox mandate options -->
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="save-card" class="checkbox-input" checked>
+                            <label for="save-card" class="checkbox-label">
+                                Save this card as per RBI guidelines and <strong>Enable Auto-Pay (Monthly Subscription)</strong>.
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="action-row">
+                        <button class="btn-cancel" onclick="simulatePayment(false)">
+                            Cancel
+                        </button>
+                        <button class="btn-continue" onclick="simulatePayment(true)">
+                            Continue
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function simulatePayment(success) {
+            if (!success) {
+                window.location.href = '{% url "payment_failure" %}';
+                return;
+            }
+
+            const autopayChecked = document.getElementById('save-card').checked;
+            window.location.href = `{% url "payment_success" %}?order_id={{ order_id }}&auto_pay=${autopayChecked}`;
+        }
+    </script>
+</body>
+</html>
