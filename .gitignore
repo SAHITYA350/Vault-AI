@@ -5,5 +5,5 @@ __pycache__/
 *.pyc
 db.sqlite3
 media/
-static/
+staticfiles/
 .DS_Store
