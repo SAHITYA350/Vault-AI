@@ -98,11 +98,14 @@ DATABASES = {
 
 # Use PostgreSQL if DATABASE_URL environment variable is provided (production/Docker Compose)
 if os.getenv('DATABASE_URL'):
-    DATABASES['default'] = dj_database_url.config(
-        default=os.getenv('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=False
-    )
+    try:
+        DATABASES['default'] = dj_database_url.config(
+            default=os.getenv('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=False
+        )
+    except Exception:
+        pass
 
 
 # Password validation

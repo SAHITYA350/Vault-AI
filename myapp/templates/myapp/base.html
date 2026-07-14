@@ -1,8 +1,10 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{% static 'myapp/images/vaultailogo.png' %}">
     <title>{% block title %}AI Knowledge Vault{% endblock %}</title>
     <!-- Google Fonts - Outfit & Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -512,11 +514,8 @@
     <!-- Sidebar navigation -->
     <aside class="sidebar">
         <a href="{% url 'dashboard' %}" class="logo-container">
-            <div class="logo-icon">
-                <svg viewBox="0 0 32 32" width="30" height="30" style="display: block;">
-                    <rect width="32" height="32" rx="8" fill="#dc2626"/>
-                    <text x="6" y="22" font-family="'Plus Jakarta Sans', sans-serif" font-weight="900" font-size="16" fill="#ffffff">dj</text>
-                </svg>
+            <div class="logo-icon" style="background: transparent; border: none;">
+                <img src="{% static 'myapp/images/vaultailogo.png' %}" alt="Vault AI Logo" style="width: 36px; height: 36px; object-fit: contain;">
             </div>
             <span class="logo-text">Vault AI</span>
         </a>
