@@ -533,6 +533,7 @@ def graph_data_api(request):
         add_node({
             'id': doc_node_id,
             'label': doc.name[:22] + ('…' if len(doc.name) > 22 else ''),
+            'search_text': doc.name,
             'group': doc.file_type or 'document',
             'file_url': doc.file.url if doc.file else '',
             'ai_caption': doc.ai_caption or '',
@@ -555,6 +556,7 @@ def graph_data_api(request):
             add_node({
                 'id': concept_node_id,
                 'label': label[:28] + ('…' if len(label) > 28 else ''),
+                'search_text': label,
                 'group': 'concept',
                 'title': (
                     f"<b>{label}</b><br>"
@@ -589,6 +591,7 @@ def graph_data_api(request):
                 add_node({
                     'id': sub_node_id,
                     'label': sub_label,
+                    'search_text': sub.text,
                     'group': 'page',
                     'title': f"<i>{sub.text[:400]}</i>",
                     'value': 1.2,
@@ -630,6 +633,7 @@ def graph_data_api(request):
                 add_node({
                     'id': pid,
                     'label': f"Page {idx+1}",
+                    'search_text': pt,
                     'group': 'page',
                     'title': f"Page {idx+1}:<br>{pt[:300]}…",
                     'value': 1.5,
@@ -651,6 +655,7 @@ def graph_data_api(request):
                     add_node({
                         'id': tag_id,
                         'label': f"#{tag}",
+                        'search_text': tag,
                         'group': 'tag',
                         'title': f"Semantic Tag: #{tag}",
                         'value': 1.8,

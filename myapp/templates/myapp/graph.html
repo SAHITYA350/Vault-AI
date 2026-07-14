@@ -702,9 +702,10 @@
                     });
 
                     // 2. Identify nodes matching search string
-                    let searchMatches = baseFilteredNodes.filter(node =>
-                        node.label.toLowerCase().includes(searchVal)
-                    );
+                    let searchMatches = baseFilteredNodes.filter(node => {
+                        const searchText = (node.search_text || node.label || '').toLowerCase();
+                        return searchText.includes(searchVal);
+                    });
 
                     // 3. Collect matching node IDs and their full subgraph (BFS up to depth 3)
                     const visibleNodeIds = new Set();
