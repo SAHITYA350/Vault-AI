@@ -534,7 +534,10 @@
                     </div>
 
                     <div class="doc-actions">
-                        <a href="{{ doc.file.url }}" target="_blank" class="action-btn" title="Download">
+                        <a href="{{ doc.file.url }}" target="_blank" class="action-btn" title="Open in New Tab">
+                            <i data-lucide="eye" style="width: 14px; height: 14px;"></i>
+                        </a>
+                        <a href="{{ doc.file.url }}" download class="action-btn" title="Download">
                             <i data-lucide="download" style="width: 14px; height: 14px;"></i>
                         </a>
                         <a href="{% url 'delete_document' doc.id %}" class="action-btn delete" title="Delete"

@@ -271,14 +271,16 @@
 {% block content %}
 <!-- AI Semantic Search Bar inside Library -->
 <div class="search-box-container">
-    <form action="" method="get">
+    <form action="" method="get" id="library-search-form">
         {% if selected_type %}
         <input type="hidden" name="type" value="{{ selected_type }}">
         {% endif %}
         <span class="search-icon-box">
             <i data-lucide="search" style="width: 20px; height: 20px;"></i>
         </span>
-        <input type="text" name="q" class="search-input" value="{{ query|default:'' }}" placeholder="Search image, pdf, ppt, doc, etc.">
+        <input type="text" name="q" class="search-input" value="{{ query|default:'' }}" 
+               placeholder="Search image, pdf, ppt, doc, etc."
+               oninput="clearTimeout(this.delay); this.delay = setTimeout(() => document.getElementById('library-search-form').submit(), 800);">
     </form>
 </div>
 
@@ -303,8 +305,11 @@
     <div class="glass-card file-card">
         <!-- Overlay on hover -->
         <div class="file-overlay">
-            <a href="{{ doc.file.url }}" target="_blank" class="overlay-btn" title="View or Download">
+            <a href="{{ doc.file.url }}" target="_blank" class="overlay-btn" title="Open in New Tab">
                 <i data-lucide="eye"></i>
+            </a>
+            <a href="{{ doc.file.url }}" download class="action-btn overlay-btn" style="background: var(--accent-primary); color: white;" title="Download">
+                <i data-lucide="download"></i>
             </a>
             <a href="{% url 'delete_document' doc.id %}" class="overlay-btn delete" title="Delete File" onclick="return confirm('Are you sure you want to delete this file?');">
                 <i data-lucide="trash-2"></i>
